@@ -128,11 +128,7 @@ class App {
     if (this.couldNotLoad) {
       render(this.element, html`
         <div>
-        <h4>Loading the current channel did not work. Are you looking for this?</h1>
-          <ul>
-            <li><a href="${"http://prophet-stories:" + location.port}">Prophet Stories</a></li>
-            <li><a href="${"http://ebookseastomorg:" + location.port}">Ebooks</a></li>
-          </ul>
+          <h4>Loading the current channel did not work.</h1>
         </div>
       `);
       return;

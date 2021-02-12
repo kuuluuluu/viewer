@@ -10,6 +10,7 @@ window.useDev = {
   }
 };
 if (!isProd) {
-  if (useDevSettings.channelsApi)
-    env.channelsApi = "http://0.0.0.0:8081";
+  if (useDevSettings.channelsApi) {
+    env.channelsApi = useDevSettings.channelsApi === true ? "http://0.0.0.0:8081" : useDevSettings.channelsApi;
+  }
 }

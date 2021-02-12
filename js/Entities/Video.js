@@ -11,7 +11,7 @@ export class Video {
     const typeSlug = item.type.toLowerCase();
     const youtubeId = item.links.replace("https://www.youtube.com/watch?v=", "").replace("https://www.youtube.com/embed/", "");
     return html`
-      <a href="${"/" + typeSlug + "/" + lastPart(item.id) + `?item-language=${item.langCode}` + (filters ? "&" + filters : "")}" 
+      <a href="${"/" + typeSlug + "/" + lastPart(item.id) + `?${item.langCode ? "item-language=" + item.langCode : ""}` + (filters ? "&" + filters : "")}" 
          class="${"teaser " + typeSlug}" 
          onclick="${linkClick}">
         ${item.cover ? html`<div class="cover-wrapper"><img loading="lazy" class="cover" src="${item.cover}" /></div>` : ""}
@@ -25,12 +25,14 @@ export class Video {
   page() {
     const query = new URLSearchParams(location.search);
     const id = location.pathname.split("/")?.[2];
-    const item = app.items.find((item2) => lastPart(item2.id) === id && item2.langCode === query.get("item-language"));
+    const item = app.items.find((item2) => lastPart(item2.id) === id && (!query.get("item-language") || item2.langCode === query.get("item-language")));
     if (!item)
       window.location.pathname = "/";
     const typeSlug = item.type.toLowerCase();
+    const isYoutube = item.links.includes("youtube.com");
     const youtubeId = item.links.replace("https://www.youtube.com/watch?v=", "").replace("https://www.youtube.com/embed/", "");
-    const youtubeLink = `https://www.youtube.com/embed/${youtubeId}?enablejsapi=1&modestbranding=1&rel=0&disablekb=1&showinfo=0&showsearch=0&playsinline=1`;
+    const videoLink = isYoutube ? `https://www.youtube.com/embed/${youtubeId}?enablejsapi=1&modestbranding=1&rel=0&disablekb=1&showinfo=0&showsearch=0&playsinline=1` : item.links;
+    console.log(videoLink);
     const attachApi = async (element) => {
       await this.loadYoutubeAPI();
       if (this.player.get(element))
@@ -58,8 +60,12 @@ export class Video {
           <h1>${item.title}</h1>
 
           <div class="video-wrapper">
-            <div class="responsive-youtube" paused="${this.videoIsPaused.get(youtubeId) ? true : null}">
-              <iframe ref="${attachApi}" src="${youtubeLink}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <div class="responsive-video" paused="${this.videoIsPaused.get(youtubeId) ? true : null}">
+            ${isYoutube ? html`
+                <iframe ref="${attachApi}" src="${videoLink}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>` : html`
+                <video controls>
+                  <source src="${videoLink}" type="${"video/" + videoLink.substr(videoLink.length - 3)}">
+                </video>`}
             </div>
           </div>
 

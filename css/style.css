@@ -1007,14 +1007,15 @@ select option {
   font-weight: bold;
 }
 
-.responsive-youtube {
+.responsive-video {
   background: black;
   width: 100%;
   padding-bottom: 57%;
   position: relative;
   margin-bottom: 30px;
 }
-.responsive-youtube iframe {
+.responsive-video video,
+.responsive-video iframe {
   position: absolute;
   top: 0;
   left: 0;

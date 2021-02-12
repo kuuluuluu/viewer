@@ -8,9 +8,9 @@ export const template_style = () => {
     <style>
       ${`
       body {
-        // --color-primary: ${app.siteInfo.colors.primary};
-        // --color-secondary: ${app.siteInfo.colors.secondary};
-        // --color-tertiary: ${app.siteInfo.colors.tertiary};
+        --color-primary: ${app.siteInfo?.colors?.primary};
+        --color-secondary: ${app.siteInfo?.colors?.secondary};
+        --color-tertiary: ${app.siteInfo?.colors?.tertiary};
       }
       `}
     </style>
