@@ -4,7 +4,7 @@ import {addMatomo, addChatwoot} from "./ThirdPartyScripts.js";
 import {template_style, template_header, template_sidebar, template_overview, template_about} from "./BaseTemplates.js";
 import {Language, isRTL} from "./LanguageService.js";
 import {env} from "./Env.js";
-const channelId = localStorage?.channelId ?? 'winter';
+const channelId = localStorage?.channelId ?? 'demo-ebooks';
 const baseUrl = `${env.channelsApi}/${channelId}`;
 Language.setBaseUrl(baseUrl);
 class App {
