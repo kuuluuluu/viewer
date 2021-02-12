@@ -1,5 +1,5 @@
 import {html} from "../vendor/uhtml.js";
-import {lastPart, linkClick, getPropertyFromId} from "../helpers.js";
+import {lastPart, linkClick, getPropertyFromId, responsiveImage} from "../helpers.js";
 import {template_content_top} from "../BaseTemplates.js";
 import {app} from "../App.js";
 import {t} from "../LanguageService.js";
@@ -12,7 +12,9 @@ export class Ebook {
     const link = "/ebook/" + lastPart(item.id) + `?item-language=${item.langCode}` + (filters ? "&" + filters : "");
     return html`
       <a href="${link}" class="teaser ebook" onclick="${linkClick}">
-        ${frontCover ? html`<img loading="lazy" class="image" src="${frontCover}" />` : ""}
+        ${frontCover ? html`<img loading="lazy" class="image" src="${responsiveImage(frontCover, {
+      width: 230
+    })}" />` : ""}
         <h3 class="title">${item.title}</h3>
         ${authorNames.length ? html`<span class="sub-title">${authorNames.map((authorName) => authorName)}</span>` : html``}
       </a>
@@ -74,8 +76,12 @@ export class Ebook {
       }
     };
     return html`
-      ${frontCover ? html`<img cover="${app.currentCover}" onclick="${coverClick}" class="cover front" alt="${item.title}" src="${frontCover}" />` : ""}
-      ${backCover ? html`<img cover="${app.currentCover}" onclick="${coverClick}" class="cover back" alt="${item.title}" src="${backCover}" />` : ""}
+      ${frontCover ? html`<img cover="${app.currentCover}" onclick="${coverClick}" class="cover front" alt="${item.title}" src="${responsiveImage(frontCover, {
+      width: 400
+    })}" />` : ""}
+      ${backCover ? html`<img cover="${app.currentCover}" onclick="${coverClick}" class="cover back" alt="${item.title}" src="${responsiveImage(backCover, {
+      width: 400
+    })}" />` : ""}
     `;
   }
   downloads(item) {

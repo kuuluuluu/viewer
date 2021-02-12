@@ -57,3 +57,14 @@ export function setCaretAtEnd(elem) {
     elem.focus();
   }
 }
+export const responsiveImage = (image, options = {}) => {
+  const mapping = {
+    width: "w",
+    height: "h"
+  };
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(options)) {
+    params.append(mapping[key], value.toString());
+  }
+  return `//images.weserv.nl/?url=${image}&default=${image}${params.toString() ? "&" + params.toString() : ""}`;
+};
