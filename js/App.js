@@ -44,6 +44,13 @@ class App {
       this.couldNotLoad = true;
       this.render();
     });
+    window.addEventListener("click", (event) => {
+      if (this.showPanel === "menu" && !event.target.classList.contains("toggle-menu") && !event.target.closest(".content-top")) {
+        this.showPanel = "";
+        this.render();
+      }
+    });
+    window.addEventListener("resize", () => this.render());
     window.addEventListener("popstate", () => this.render());
     window.addEventListener("should-render", () => this.render());
     window.addEventListener("searched", () => setCaretAtEnd(document.querySelector('input[type="search"]')));

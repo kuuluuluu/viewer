@@ -30,25 +30,37 @@ export class Ebook {
     if (!item)
       window.location.pathname = "/";
     const authors = item.authors.map((authorId) => getPropertyFromId(app.authors, authorId, item.langCode));
+    const isDesktop = window.innerWidth >= 1100;
     const backButton = (extraClass) => html`<a class="${"back-to-overview " + extraClass}" onclick="${linkClick}" href="${"/?" + app.createFilterUrl()}"><span class="triangle">◀</span>${t`Back to search results`}</a>`;
     return html`
       <div class="content-wrapper">
         ${template_content_top()}
 
         <div class="${"full content ebook"}">
-          ${backButton("")}
+          <div class="grid-header">
+            ${backButton("")}
 
-          <header class="book-header">
+            ${isDesktop ? html`
             <h1 class="title">${item.title}</h1>
             <h3 class="authors">${authors.map((author) => author.name)}</h3>
+            ${this.downloads(item)}
+            ` : html``}
             
+          </div>
+
+          <header class="book-header">
+            ${!isDesktop ? html`
+              <h1 class="title">${item.title}</h1>
+              <h3 class="authors">${authors.map((author) => author.name)}</h3>            
+            ` : html``}
+
             ${this.languages(item)}
             
           </header>
 
           <div class="cover-and-download-wrapper field">
             ${this.covers(item)}
-            ${this.downloads(item)}
+            ${!isDesktop ? this.downloads(item) : html``}
           </div>
 
           <div class="description field">
@@ -139,7 +151,7 @@ export class Ebook {
     return authors.map((author) => author?.description ? html`
       <div class="author-info">
         <p>
-          ${author.image ? html`<img class="image" src="${author.image}">` : ""}
+          ${author.image ? html`<img class="image" src="${responsiveImage(author.image, {width: 100})}">` : ""}
           ${author.description}
         </p>
       </div>

@@ -1,5 +1,5 @@
 import {html} from "./vendor/uhtml.js";
-import {linkClick, getEntityType, getPropertyFromId} from "./helpers.js";
+import {linkClick, getEntityType, getPropertyFromId, responsiveImage} from "./helpers.js";
 import {SlimSelect} from "./vendor/slimselect.js";
 import {app} from "./App.js";
 import {Language, t} from "./LanguageService.js";
@@ -26,12 +26,10 @@ export const template_header = () => {
   return html`
     <header class="site-header" onclick="${menuToggle}">
       <button class="toggle-menu mobile">
-        <span class="bar"></span>
-        <span class="bar"></span>
-        <span class="bar"></span>
+        <img src="/images/menu.svg">
       </button>
       <a class="site-logo-link" href="${`/?site-language=${Language.current}`}" onclick="${linkClick}">
-        <img class="site-logo" src="${app.siteInfo.logo}" />
+        ${app.siteInfo.logo ? html`<img class="site-logo" src="${responsiveImage(app.siteInfo.logo, {width: 100})}" />` : html``}
       </a>
       <h1 class="site-title mobile" ref="${(element) => element.innerHTML = app.siteInfo.name}"></h1>
     </header>
@@ -42,7 +40,7 @@ export const template_sidebar = () => {
   const languages = app.languages;
   const languageFilter = filters.langCode.size > 1 ? html`
     <div class="filter">
-      <h5 class="title">${t`I want results in the language:`}</h5>
+      <h5 class="title">${t`I want results in the language`}</h5>
       ${template_languages(filters.langCode, languages)}
     </div>
   ` : null;
@@ -151,13 +149,17 @@ export const template_subjects = (subjects, subjectObjects) => {
     <select class="mobile" onchange="${(event) => toggleSubject(event.currentTarget.value)}">
       <option value="">${t`- All subjects -`}</option>
       ${[...subjects.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([subject, selected]) => html`
-        <option value="${subject}" selected="${selected ? true : null}">${subject}</option>
+        <option value="${subject}" selected="${selected ? true : null}">
+          ${subjectObjects?.length ? getPropertyFromId(subjectObjects, subject, Language.current, "name") : subject}
+        </option>
       `)}
     </select>
 
     <ul class="list desktop">
       ${[...subjects.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([subject, selected]) => html`
-        <li class="${"list-item " + (selected ? "active" : "")}" onclick="${() => toggleSubject(subject)}">${subjectObjects ? getPropertyFromId(subjectObjects, subject, Language.current, "name") : subject}</li>
+        <li class="${"list-item " + (selected ? "active" : "")}" onclick="${() => toggleSubject(subject)}">
+          ${subjectObjects?.length ? getPropertyFromId(subjectObjects, subject, Language.current, "name") : subject}
+        </li>
       `)}
     </ul>`;
 };
@@ -219,6 +221,13 @@ export const template_content_top = (content = null) => {
   return html`
       <div class="content-top">
 
+        <button class="close" onclick="${() => {
+    app.toggleVisiblePanel("");
+    app.render();
+  }}">
+          <img src="/images/close.svg" />
+        </button>
+
         ${content ? content : ""}
 
         <nav class="main-menu-wrapper">
@@ -233,19 +242,35 @@ export const template_content_top = (content = null) => {
     `;
 };
 export const template_site_language = () => {
+  let hiddenSelect;
+  let visibleSelect;
   const setSiteLanguage = async (langCode) => {
     await Language.setCurrent(langCode);
     app.updateUrl();
     await app.render();
+    updateWidth();
+  };
+  const updateWidth = () => {
+    const width = hiddenSelect.getBoundingClientRect().width;
+    visibleSelect.style.width = width + "px";
   };
   return html`
   <div class="site-language-picker-wrapper">
-  <img class="site-language-picker-icon" src="/images/language.svg">
-  <select class="site-language-picker" onchange="${(event) => setSiteLanguage(event.currentTarget.value)}">
-    ${[...Object.entries(Language.uiLanguages)].sort(([a], [b]) => a.localeCompare(b)).map(([langCode, label]) => html`
-      <option selected="${Language.current === langCode ? true : null}" value="${langCode}">${label}</option>
-    `)}
-  </select>
+
+    <select ref="${(element) => hiddenSelect = element}" class="hidden">
+      <option>${Language.uiLanguages[Language.current]}</option>
+    </select>
+
+    <img class="site-language-picker-icon" src="/images/language.svg">
+
+    <select ref="${(element) => {
+    visibleSelect = element;
+    setTimeout(updateWidth, 20);
+  }}" class="site-language-picker" onchange="${(event) => setSiteLanguage(event.currentTarget.value)}">
+      ${[...Object.entries(Language.uiLanguages)].sort(([a], [b]) => a.localeCompare(b)).map(([langCode, label]) => html`
+        <option selected="${Language.current === langCode ? true : null}" value="${langCode}">${label}</option>
+      `)}
+    </select>
   </div>`;
 };
 export const template_about = () => {
