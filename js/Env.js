@@ -1,6 +1,6 @@
 const isProd = [80, 443].includes(parseInt(location.port));
 export let env = {
-  channelsApi: "https://api.kuuluuu.org/v1/channels",
+  channelsApi: "https://api.kuuluu.org/v1/channels",
   channelId: 'demo-ebooks'
 };
 const useDevSettings = localStorage.useDev ? JSON.parse(localStorage.useDev) : {};
