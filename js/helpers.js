@@ -13,7 +13,8 @@ export const fetchData = async (baseUrl) => {
 };
 export const linkClick = (event) => {
   event.preventDefault();
-  history.pushState(null, null, event.currentTarget.getAttribute("href"));
+  const href = event.currentTarget.getAttribute("href");
+  history.pushState(null, null, href);
   window.dispatchEvent(new CustomEvent("should-render"));
 };
 const entityTypes = [new Video(), new Ebook()];
@@ -33,6 +34,10 @@ export const getPropertyFromId = (items, id, preferredLangCode, property = null)
   const itemEnglishFallback = items.find((item) => item.id === id && item.langCode === "en");
   if (itemEnglishFallback) {
     results.push(itemEnglishFallback);
+  }
+  const finalLanguageFallback = items.find((item) => item.id === id && item.language);
+  if (finalLanguageFallback) {
+    results.push(finalLanguageFallback);
   }
   const finalFallback = items.find((item) => item.id === id && !item.language);
   if (finalFallback) {

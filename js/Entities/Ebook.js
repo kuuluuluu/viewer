@@ -31,7 +31,7 @@ export class Ebook {
       window.location.pathname = "/";
     const authors = item.authors.map((authorId) => getPropertyFromId(app.authors, authorId, item.langCode));
     const isDesktop = window.innerWidth >= 1100;
-    const backButton = (extraClass) => html`<a class="${"back-to-overview " + extraClass}" onclick="${linkClick}" href="${"/?" + app.createFilterUrl()}"><span class="triangle">◀</span>${t`Back to search results`}</a>`;
+    const backButton = (extraClass) => html`<a class="${"back-to-overview " + extraClass}" onclick="${linkClick}" href="${"/?" + app.createFilterUrl(app.filters)}"><span class="triangle">◀</span>${t`Back to search results`}</a>`;
     return html`
       <div class="content-wrapper">
         ${template_content_top()}
@@ -88,7 +88,7 @@ export class Ebook {
       }
     };
     return html`
-      ${frontCover ? html`<img cover="${app.currentCover}" onclick="${coverClick}" class="cover front" alt="${item.title}" src="${responsiveImage(frontCover, {
+      ${frontCover ? html`<img cover="${app.currentCover}" onclick="${coverClick}" class="${"cover front " + (!backCover ? "only" : "")}" alt="${item.title}" src="${responsiveImage(frontCover, {
       width: 400
     })}" />` : ""}
       ${backCover ? html`<img cover="${app.currentCover}" onclick="${coverClick}" class="cover back" alt="${item.title}" src="${responsiveImage(backCover, {
@@ -108,7 +108,7 @@ export class Ebook {
   }
   languages(item) {
     const typeSlug = item.type.toLowerCase();
-    const filters = app.createFilterUrl();
+    const filters = app.createFilterUrl(app.filters);
     const otherLanguages = app.items.filter((innerItem) => innerItem.id === item.id && innerItem.language !== item.language).map((item2) => {
       return {
         language: item2.language,
@@ -142,7 +142,7 @@ export class Ebook {
       return `https://www.youtube.com/embed/${youtubeId}`;
     }) : [];
     return youtubeLinks.map((link) => html`
-      <div class="responsive-youtube">
+      <div class="responsive-video">
         <iframe modestbranding="1" rel="0" src="${link}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
       </div>              
     `);

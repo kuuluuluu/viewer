@@ -36,24 +36,24 @@ export const template_header = () => {
     `;
 };
 export const template_sidebar = () => {
-  const filters = app.filters;
+  const filters2 = app.filters;
   const languages = app.languages;
-  const languageFilter = filters.langCode.size > 1 ? html`
+  const languageFilter = filters2.langCode.size > 1 ? html`
     <div class="filter">
       <h5 class="title">${t`I want results in the language`}</h5>
-      ${template_languages(filters.langCode, languages)}
+      ${template_languages(filters2.langCode, languages)}
     </div>
   ` : null;
-  const subjectFilter = filters.subject.size ? html`
+  const categoryFilter = filters2.category.size ? html`
     <div class="filter">
       <h5 class="title">${t`Category`}</h5>
-      ${template_subjects(filters.subject, app.categories)}
+      ${template_categories(filters2.category, app.categories)}
     </div>
   ` : null;
-  const authorFilter = filters.authors.size > 1 ? html`
+  const authorFilter = filters2.authors.size > 1 ? html`
     <div class="filter">
       <h5 class="title">${t`Author(s)`}</h5>
-      ${template_tags(filters.authors, t.direct(`Select an author`), app.authors)}
+      ${template_tags(filters2.authors, t.direct(`Select an author`), app.authors)}
     </div>
   ` : null;
   const searchFilter = languageFilter || authorFilter ? html`
@@ -78,7 +78,7 @@ export const template_sidebar = () => {
         </h3>` : null}
         ${languageFilter}
         ${searchFilter}
-        ${subjectFilter}
+        ${categoryFilter}
         ${authorFilter}
       </div>
     </div>
@@ -104,7 +104,7 @@ export const template_tags = (tags, placeholder, tagObjects) => {
         <option data-placeholder="true">${placeholder}</option>
         
         ${[...tags.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([tag, selected]) => html`
-          <option value="${tag}" selected="${selected ? true : null}">${tagObjects ? getPropertyFromId(tagObjects, tag, Language.current, "name") : tag}</option>
+          <option value="${tag}" .selected="${selected ? true : null}">${tagObjects ? getPropertyFromId(tagObjects, tag, Language.current, "name") : tag}</option>
         `)}
       </select>
     `;
@@ -120,7 +120,7 @@ export const template_languages = (languageFilter, languages) => {
       <select onchange="${(event) => setLanguage(event.currentTarget.value)}">
         <option value="">${t`- All languages -`}</option>
         ${[...languageFilter.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([langCode, selected]) => html`
-          <option value="${langCode}" selected="${selected ? true : null}">${languages.get(langCode)}</option>
+          <option value="${langCode}" .selected="${selected ? true : null}">${languages.get(langCode)}</option>
         `)}
       </select>`;
 };
@@ -138,27 +138,27 @@ export const template_search = (app2) => {
     <input value="${app2.search}" placeholder="${t.direct(`Search by keyword`)}" onkeyup="${(event) => setSearch(event, event.currentTarget.value)}" type="search" />
   `;
 };
-export const template_subjects = (subjects, subjectObjects) => {
-  const toggleSubject = (subject) => {
-    for (const innerSubject of subjects.keys()) {
-      subjects.set(innerSubject, innerSubject === subject && !subjects.get(subject));
+export const template_categories = (categorys, categoryObjects) => {
+  const toggleSubject = (category) => {
+    for (const innerSubject of categorys.keys()) {
+      categorys.set(innerSubject, innerSubject === category && !categorys.get(category));
     }
     window.dispatchEvent(new CustomEvent("filter-selected"));
   };
   return html`
     <select class="mobile" onchange="${(event) => toggleSubject(event.currentTarget.value)}">
-      <option value="">${t`- All subjects -`}</option>
-      ${[...subjects.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([subject, selected]) => html`
-        <option value="${subject}" selected="${selected ? true : null}">
-          ${subjectObjects?.length ? getPropertyFromId(subjectObjects, subject, Language.current, "name") : subject}
+      <option value="">${t`- All categorys -`}</option>
+      ${[...categorys.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([category, selected]) => html`
+        <option value="${category}" selected="${selected ? true : null}">
+          ${categoryObjects?.length ? getPropertyFromId(categoryObjects, category, Language.current, "name") : category}
         </option>
       `)}
     </select>
 
     <ul class="list desktop">
-      ${[...subjects.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([subject, selected]) => html`
-        <li class="${"list-item " + (selected ? "active" : "")}" onclick="${() => toggleSubject(subject)}">
-          ${subjectObjects?.length ? getPropertyFromId(subjectObjects, subject, Language.current, "name") : subject}
+      ${[...categorys.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([category, selected]) => html`
+        <li class="${"list-item " + (selected ? "active" : "")}" onclick="${() => toggleSubject(category)}">
+          ${categoryObjects?.length ? getPropertyFromId(categoryObjects, category, Language.current, "name") : category}
         </li>
       `)}
     </ul>`;
@@ -166,7 +166,7 @@ export const template_subjects = (subjects, subjectObjects) => {
 export const template_overview = () => {
   let hiddenSelect;
   let visibleSelect;
-  const filterUrl = app.createFilterUrl();
+  const filterUrl = app.createFilterUrl(app.filters);
   const sortItems = {
     title: t`Title`,
     authors: t`Author`,
@@ -181,11 +181,55 @@ export const template_overview = () => {
     const width = hiddenSelect.getBoundingClientRect().width;
     visibleSelect.style.width = width + "px";
   };
+  const filterMapping = {
+    category: app.categories,
+    authors: app.authors,
+    langCode: app.languages
+  };
+  const selectedFilters = [];
+  const createFiltersClone = (ignoreName, ignoreKey) => {
+    const filters2 = {
+      tags: new Map(),
+      category: new Map(),
+      langCode: new Map(),
+      authors: new Map()
+    };
+    for (const [name, values] of Object.entries(app.filters)) {
+      filters2[name] = new Map();
+      for (const [key, selected] of values.entries()) {
+        filters2[name].set(key, ignoreName === name && ignoreKey === key ? false : selected);
+      }
+    }
+    return filters2;
+  };
+  const selectedFilterClick = (event) => {
+    event.preventDefault();
+    const href = event.currentTarget.getAttribute("href");
+    history.pushState(null, null, href);
+    app.filters = app.createFilters(app.items, app.authors, app.categories);
+    app.render();
+  };
+  for (const [name, values] of Object.entries(app.filters)) {
+    for (const [key, selected] of values.entries()) {
+      if (selected) {
+        let label = key;
+        if (Array.isArray(filterMapping?.[name])) {
+          label = getPropertyFromId(filterMapping?.[name], key, Language.current, "name");
+        } else {
+          label = filterMapping?.[name].get(key);
+        }
+        const newFilters = createFiltersClone(name, key);
+        const filtersQuery = app.createFilterUrl(newFilters);
+        selectedFilters.push(html`<a class="selected-filter" onclick="${selectedFilterClick}" href="${"/?" + filtersQuery}">${label} <img src="/images/close.svg"></a>`);
+      }
+    }
+  }
   return html`
     <div class="content-wrapper">
       ${template_content_top()}
       <h1 class="site-title desktop" ref="${(element) => element.innerHTML = app.siteInfo.name}"></h1>
       <div class="page-actions">
+
         <button class="toggle-filters mobile" onclick="${() => {
     app.toggleVisiblePanel("filters");
     app.render();
@@ -208,7 +252,15 @@ export const template_overview = () => {
             ${Object.entries(sortItems).map(([key, label]) => html`<option selected=${app.sortBy === key ? true : null} value="${key}">${label}</option>`)}
           </select>
 
-          </div>
+        </div>
+
+        ${selectedFilters.length ? html`
+        <div class="selected-filters">
+          <label>${t`Your filters`}</label>
+          ${selectedFilters}
+        </div>
+        ` : html``}
+
       </div>
       <div class="overview content">
         ${app.filteredItems.map((item) => getEntityType(item.type).teaser(item, filterUrl))}
@@ -218,6 +270,11 @@ export const template_overview = () => {
 };
 export const template_content_top = (content = null) => {
   const isActive = location.pathname === "/about";
+  const closeMenu = (event) => {
+    linkClick(event);
+    app.showPanel = "";
+    app.render();
+  };
   return html`
       <div class="content-top">
 
@@ -232,7 +289,7 @@ export const template_content_top = (content = null) => {
 
         <nav class="main-menu-wrapper">
           <ul class="main-menu">
-            <li class="menu-item"><a onclick="${linkClick}" class="${"menu-link " + (isActive ? "active" : "")}" href="/about">${t`About this website`}</a></li>
+            <li class="menu-item"><a onclick="${closeMenu}" class="${"menu-link " + (isActive ? "active" : "")}" href="/about">${t`About this website`}</a></li>
           </ul>
         </nav>       
 
@@ -246,6 +303,7 @@ export const template_site_language = () => {
   let visibleSelect;
   const setSiteLanguage = async (langCode) => {
     await Language.setCurrent(langCode);
+    app.showPanel = "";
     app.updateUrl();
     await app.render();
     updateWidth();

@@ -55,8 +55,8 @@ class App {
     window.addEventListener("should-render", () => this.render());
     window.addEventListener("searched", () => setCaretAtEnd(document.querySelector('input[type="search"]')));
     window.addEventListener("filter-selected", () => {
-      const filters = this.createFilterUrl();
-      history.pushState(null, null, filters ? "/?" + filters : "/");
+      const filters2 = this.createFilterUrl(this.filters);
+      history.pushState(null, null, filters2 ? "/?" + filters2 : "/");
       this.render();
     });
   }
@@ -70,35 +70,36 @@ class App {
   createFilters(items, authors, categories) {
     const query = new URLSearchParams(location.search);
     this.search = query.get("search");
-    const selectedSubject = query.get("subject");
+    const selectedCategory = query.get("category");
     const selectedLangCode = query.get("langCode");
     const selectedAuthors = query.get("authors")?.split(",").map((tag) => tag.replace(/&#x2C;/g, ",")) ?? [];
     const selectedTags = query.get("tags")?.split(",").map((tag) => tag.replace(/&#x2C;/g, ",")) ?? [];
-    const filters = {
+    const filters2 = {
       tags: new Map(),
-      subject: new Map(),
+      category: new Map(),
       langCode: new Map(),
       authors: new Map()
     };
     for (const item of items) {
       if (item?.tags) {
         for (const tag of item.tags) {
-          filters.tags.set(tag, selectedTags.includes(tag));
+          filters2.tags.set(tag, selectedTags.includes(tag));
         }
       }
-      if (item.subject) {
-        filters.subject.set(item.subject, item.subject === selectedSubject);
-      }
-      filters.langCode.set(item.langCode, item.langCode === selectedLangCode);
+      filters2.langCode.set(item.langCode, item.langCode === selectedLangCode);
       this.languages.set(item.langCode, item.language);
     }
     for (const author of authors) {
-      filters.authors.set(author.id, selectedAuthors.includes(author.name));
+      if (!filters2.authors.get(author.id)) {
+        filters2.authors.set(author.id, selectedAuthors.includes(lastPart(author.id)));
+      }
     }
     for (const category of categories) {
-      filters.subject.set(category.id, selectedAuthors.includes(category.name));
+      if (!filters2.category.get(category.id)) {
+        filters2.category.set(category.id, selectedCategory === lastPart(category.id));
+      }
     }
-    return filters;
+    return filters2;
   }
   getFilteredItems() {
     let filteredItems = [...this.items];
@@ -190,12 +191,12 @@ class App {
     `);
   }
   updateUrl() {
-    const filters = this.createFilterUrl();
-    history.pushState(null, null, filters ? "?" + filters : "/");
+    const filters2 = this.createFilterUrl(this.filters);
+    history.pushState(null, null, filters2 ? "?" + filters2 : "/");
   }
-  createFilterUrl() {
+  createFilterUrl(filters2) {
     const urlObject = {};
-    for (const [name, filter] of Object.entries(this.filters)) {
+    for (const [name, filter] of Object.entries(filters2)) {
       const selection = [...filter.entries()].filter(([, selected]) => selected).map(([tag]) => lastPart(tag).replace(/,/g, "&#x2C;")).join(",");
       if (selection) {
         urlObject[name] = selection;
