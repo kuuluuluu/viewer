@@ -138,17 +138,17 @@ export const template_search = (app2) => {
     <input value="${app2.search}" placeholder="${t.direct(`Search by keyword`)}" onkeyup="${(event) => setSearch(event, event.currentTarget.value)}" type="search" />
   `;
 };
-export const template_categories = (categorys, categoryObjects) => {
+export const template_categories = (categories, categoryObjects) => {
   const toggleSubject = (category) => {
-    for (const innerSubject of categorys.keys()) {
-      categorys.set(innerSubject, innerSubject === category && !categorys.get(category));
+    for (const innerSubject of categories.keys()) {
+      categories.set(innerSubject, innerSubject === category && !categories.get(category));
     }
     window.dispatchEvent(new CustomEvent("filter-selected"));
   };
   return html`
     <select class="mobile" onchange="${(event) => toggleSubject(event.currentTarget.value)}">
-      <option value="">${t`- All categorys -`}</option>
-      ${[...categorys.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([category, selected]) => html`
+      <option value="">${t`- All categories -`}</option>
+      ${[...categories.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([category, selected]) => html`
         <option value="${category}" selected="${selected ? true : null}">
           ${categoryObjects?.length ? getPropertyFromId(categoryObjects, category, Language.current, "name") : category}
         </option>
@@ -156,7 +156,7 @@ export const template_categories = (categorys, categoryObjects) => {
     </select>
 
     <ul class="list desktop">
-      ${[...categorys.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([category, selected]) => html`
+      ${[...categories.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([category, selected]) => html`
         <li class="${"list-item " + (selected ? "active" : "")}" onclick="${() => toggleSubject(category)}">
           ${categoryObjects?.length ? getPropertyFromId(categoryObjects, category, Language.current, "name") : category}
         </li>

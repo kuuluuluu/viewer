@@ -117,7 +117,7 @@ class App {
     }
     if (this.search) {
       filteredItems = filteredItems.filter((item) => {
-        return item?.searchWords.join(" ").toLowerCase().includes(this.search.toLowerCase()) || item?.description.toLowerCase().includes(this.search.toLowerCase());
+        return item?.searchWords?.join(" ").toLowerCase().includes(this.search.toLowerCase()) || item?.description.toLowerCase().includes(this.search.toLowerCase());
       });
     }
     filteredItems.sort((a, b) => {
