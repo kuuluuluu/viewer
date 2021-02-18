@@ -1,3 +1,4 @@
+import {Language} from "./LanguageService.js";
 export const addMatomo = (id) => {
   const _paq = window._paq = window._paq || [];
   _paq.push(["trackPageView"]);
@@ -12,6 +13,9 @@ export const addMatomo = (id) => {
   s.parentNode.insertBefore(g, s);
 };
 export const addChatwoot = (id) => {
+  window.chatwootSettings = {
+    locale: Language.current
+  };
   const BASE_URL = "http://chat.mep";
   const newScript = document.createElement("script");
   const scripts = document.getElementsByTagName("script")[0];

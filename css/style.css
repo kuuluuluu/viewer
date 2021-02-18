@@ -65,7 +65,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  text-align: left;
+  text-align: start;
   width: calc(100% - 30px);
   line-height: 1em;
   -webkit-user-select: none;
@@ -362,11 +362,25 @@
   justify-content: flex-start;
   text-decoration: none;
   color: var(--text);
+  flex: 1 1 140px;
 }
 .teaser .image {
   max-width: 100%;
   margin-block-end: 20px;
   border-radius: var(--radius);
+  background: var(--color-gray-light);
+  display: block;
+  position: relative;
+}
+.teaser .image:before {
+  display: none;
+}
+.teaser .image::after {
+  content: "";
+  padding-bottom: 130%;
+  font-size: 14px;
+  float: left;
+  background: var(--color-gray-light);
 }
 .teaser .title {
   word-break: break-word;
@@ -378,61 +392,6 @@
 .teaser .sub-title {
   font-size: 14px;
   font-style: italic;
-}
-@media all and (min-width: 0px) {
-  .teaser {
-    flex: 0 0 calc((100% / 1) - ((1 - 1) * 36px / 1));
-  }
-}
-@media all and (min-width: 280px) {
-  .teaser {
-    flex: 0 0 calc((100% / 2) - ((2 - 1) * 36px / 2));
-  }
-}
-@media all and (min-width: 580px) {
-  .teaser {
-    flex: 0 0 calc((100% / 3) - ((3 - 1) * 36px / 3));
-  }
-}
-@media all and (min-width: 720px) {
-  .teaser {
-    flex: 0 0 calc((100% / 2) - ((2 - 1) * 60px / 2));
-  }
-}
-@media all and (min-width: 900px) {
-  .teaser {
-    flex: 0 0 calc((100% / 2) - ((2 - 1) * 60px / 2));
-  }
-}
-@media all and (min-width: 1100px) {
-  .teaser {
-    flex: 0 0 calc((100% / 3) - ((3 - 1) * 60px / 3));
-  }
-}
-@media all and (min-width: 1400px) {
-  .teaser {
-    flex: 0 0 calc((100% / 4) - ((4 - 1) * 60px / 4));
-  }
-}
-@media all and (min-width: 1600px) {
-  .teaser {
-    flex: 0 0 calc((100% / 5) - ((5 - 1) * 60px / 5));
-  }
-}
-@media all and (min-width: 1800px) {
-  .teaser {
-    flex: 0 0 calc((100% / 6) - ((6 - 1) * 60px / 6));
-  }
-}
-@media all and (min-width: 2240px) {
-  .teaser {
-    flex: 0 0 calc((100% / 7) - ((7 - 1) * 60px / 7));
-  }
-}
-@media all and (min-width: 2440px) {
-  .teaser {
-    flex: 0 0 calc((100% / 8) - ((8 - 1) * 60px / 8));
-  }
 }
 @media all and (min-width: 720px) {
   .teaser {
@@ -530,7 +489,9 @@
   .ebook.full .grid-header .authors {
     margin-block-start: 0;
   }
-  .ebook.full .authors.field {
+  .ebook.full .other-languages.field,
+.ebook.full .description.field,
+.ebook.full .authors.field {
     margin-inline-end: 60px;
   }
 }
@@ -667,6 +628,7 @@
   width: 100%;
   display: block;
   grid-area: cover;
+  min-height: 50px;
 }
 .ebook.full .cover-and-download-wrapper .cover.back[cover=front],
 .ebook.full .cover-and-download-wrapper .cover.front[cover=back] {
@@ -1066,6 +1028,7 @@ select option {
   flex: 1 1 auto;
   border: none;
   padding: 0;
+  background-position-y: 4px;
 }
 .site-language-picker:focus {
   box-shadow: none;
@@ -1081,11 +1044,15 @@ select option {
   }
 }
 .site-title {
+  text-decoration: none;
+}
+.site-title h1 {
   font-size: 18px;
   line-height: 22px;
   font-weight: bold;
-  margin: 0;
   transform: translateY(2px);
+  margin: 0;
+  color: var(--text);
 }
 @media all and (min-width: 720px) {
   .site-title {
@@ -1095,9 +1062,6 @@ select option {
     line-height: 67px;
     font-size: 30px;
     line-height: 37px;
-  }
-  .site-title span {
-    display: inline;
   }
 }
 
@@ -1114,6 +1078,12 @@ select option {
 .main-menu .menu-link.active {
   font-weight: bold;
   color: var(--color-secondary);
+}
+@media all and (min-width: 720px) {
+  .main-menu {
+    display: flex;
+    gap: 40px;
+  }
 }
 
 .responsive-video {
@@ -1269,9 +1239,11 @@ body:after {
   font-size: 14px;
   width: auto;
   padding: 0;
-  padding-inline-end: 20px;
-  background-position: calc(100%) center;
+  padding-inline-end: 15px;
+  background-position: calc(100%) 5px;
   color: var(--text);
+  text-transform: lowercase;
+  background-size: 12px;
 }
 .sort-wrapper select:focus {
   box-shadow: none;
@@ -1378,9 +1350,6 @@ html, body {
   padding: 0 36px 36px;
   margin-bottom: auto;
   flex-wrap: wrap;
-}
-.content-wrapper .content.overview .flex-fix {
-  flex: 20;
 }
 @media all and (min-width: 720px) {
   .content-wrapper {

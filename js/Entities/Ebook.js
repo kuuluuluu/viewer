@@ -4,6 +4,9 @@ import {template_content_top} from "../BaseTemplates.js";
 import {app} from "../App.js";
 import {t} from "../LanguageService.js";
 export class Ebook {
+  constructor() {
+    this.offlinePdfs = new Map();
+  }
   teaser(item, filters) {
     let frontCover = item?.covers?.find((cover) => cover.includes("front"));
     if (!frontCover && item?.covers?.length)
@@ -12,7 +15,7 @@ export class Ebook {
     const link = "/ebook/" + lastPart(item.id) + `?item-language=${item.langCode}` + (filters ? "&" + filters : "");
     return html`
       <a href="${link}" class="teaser ebook" onclick="${linkClick}">
-        ${frontCover ? html`<img loading="lazy" class="image" src="${responsiveImage(frontCover, {
+        ${frontCover ? html`<img loading="lazy" alt="${item.title}" class="image" src="${responsiveImage(frontCover, {
       width: 230
     })}" />` : ""}
         <h3 class="title">${item.title}</h3>
@@ -65,7 +68,7 @@ export class Ebook {
 
           <div class="description field">
             <p>${item.description}</p>
-            ${this.videos(item)}
+            ${navigator.onLine ? this.videos(item) : html``}
           </div>
 
           <div class="authors field">
@@ -99,8 +102,37 @@ export class Ebook {
   downloads(item) {
     const pdfFile = item?.links?.find((file) => file.includes(".pdf"));
     const epubFile = item?.links?.find((file) => file.includes(".epub"));
+    let offlineCache;
+    caches.open("dynamic").then(async (cache) => {
+      offlineCache = cache;
+      if (!this.offlinePdfs.has(pdfFile)) {
+        this.offlinePdfs.set(pdfFile, !!await cache.match(pdfFile));
+        console.log(this.offlinePdfs.get(pdfFile));
+        app.render();
+      }
+    });
+    const downloadForOffline = () => {
+      const items = JSON.parse(localStorage.offlineItems ?? "[]");
+      const alreadySaved = items.find((offlineItem) => offlineItem.id === item.id && offlineItem.langCode === item.langCode);
+      if (!alreadySaved) {
+        items.ebook.push(item);
+        localStorage.setItem("offlineItems", JSON.stringify(items));
+        const urlsToCache = [
+          ...item.covers,
+          ...item.links.filter((link) => link.includes(".pdf") || link.includes(".epub"))
+        ];
+        offlineCache.addAll(urlsToCache);
+        this.offlinePdfs.set(pdfFile, true);
+        app.render();
+      }
+    };
     return pdfFile || epubFile ? html`
       <div class="downloads field">
+        ${this.offlinePdfs.get(pdfFile) ? html`
+        <a class="save file-download"><img src="/images/download.svg" /><span>${t`Saved`}</span></a>
+      ` : html`
+          <a class="save file-download" onclick="${downloadForOffline}"><img src="/images/download.svg" /><span>${t`Save<br>offline`}</span></a>
+        `}
         ${pdfFile ? html`<a class="pdf file-download" href="${pdfFile}" target="_blank"><img src="/images/download.svg" /><span>${t`PDF`}</span></a>` : ""}
         ${epubFile ? html`<a class="epub file-download" href="${epubFile}" target="_blank"><img src="/images/download.svg" /><span>${t`ePub`}</span></a>` : ""}
       </div>

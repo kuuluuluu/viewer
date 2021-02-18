@@ -1,5 +1,5 @@
 import {html} from "./vendor/uhtml.js";
-import {linkClick, getEntityType, getPropertyFromId, responsiveImage} from "./helpers.js";
+import {linkClick, getEntityType, getPropertyFromId, responsiveImage, lastPart} from "./helpers.js";
 import {SlimSelect} from "./vendor/slimselect.js";
 import {app} from "./App.js";
 import {Language, t} from "./LanguageService.js";
@@ -31,7 +31,9 @@ export const template_header = () => {
       <a class="site-logo-link" href="${`/?site-language=${Language.current}`}" onclick="${linkClick}">
         ${app.siteInfo.logo ? html`<img class="site-logo" src="${responsiveImage(app.siteInfo.logo, {width: 100})}" />` : html``}
       </a>
-      <h1 class="site-title mobile" ref="${(element) => element.innerHTML = app.siteInfo.name}"></h1>
+      <a class="site-title mobile" href="${`/?site-language=${Language.current}`}" onclick="${linkClick}">
+        <h1 class="site-title-text" ref="${(element) => element.innerHTML = app.siteInfo.name}"></h1>
+      </a>
     </header>
     `;
 };
@@ -187,7 +189,7 @@ export const template_overview = () => {
     langCode: app.languages
   };
   const selectedFilters = [];
-  const createFiltersClone = (ignoreName, ignoreKey) => {
+  const createFiltersClone = (ignoreName = "", ignoreKey = "") => {
     const filters2 = {
       tags: new Map(),
       category: new Map(),
@@ -209,6 +211,13 @@ export const template_overview = () => {
     app.filters = app.createFilters(app.items, app.authors, app.categories);
     app.render();
   };
+  const query = new URLSearchParams(location.search);
+  const search = query.get("search");
+  if (search) {
+    const newFilters = createFiltersClone();
+    const filtersQuery = app.createFilterUrl(newFilters, true);
+    selectedFilters.push(html`<a class="selected-filter" onclick="${selectedFilterClick}" href="${"/?" + filtersQuery}">${search} <img src="/images/close.svg"></a>`);
+  }
   for (const [name, values] of Object.entries(app.filters)) {
     for (const [key, selected] of values.entries()) {
       if (selected) {
@@ -247,7 +256,7 @@ export const template_overview = () => {
 
           <select onchange="${sortChange}" ref="${(element) => {
     visibleSelect = element;
-    setTimeout(updateWidth, 20);
+    setTimeout(updateWidth);
   }}">
             ${Object.entries(sortItems).map(([key, label]) => html`<option selected=${app.sortBy === key ? true : null} value="${key}">${label}</option>`)}
           </select>
@@ -264,17 +273,35 @@ export const template_overview = () => {
       </div>
       <div class="overview content">
         ${app.filteredItems.map((item) => getEntityType(item.type).teaser(item, filterUrl))}
+        <div class="teaser"></div>
+        <div class="teaser"></div>
+        <div class="teaser"></div>
+        <div class="teaser"></div>
+        <div class="teaser"></div>
+        <div class="teaser"></div>
+        <div class="teaser"></div>
+        <div class="teaser"></div>
+        <div class="teaser"></div>
+        <div class="teaser"></div>
       </div>  
     </div>      
     `;
 };
 export const template_content_top = (content = null) => {
-  const isActive = location.pathname === "/about";
   const closeMenu = (event) => {
     linkClick(event);
-    app.showPanel = "";
-    app.render();
+    setTimeout(() => {
+      app.showPanel = "";
+      app.render();
+    }, 300);
   };
+  const pageIds = new Set();
+  for (const page of app.pages) {
+    const pageId = page.id;
+    if (!pageIds.has(pageId)) {
+      pageIds.add(pageId);
+    }
+  }
   return html`
       <div class="content-top">
 
@@ -289,7 +316,11 @@ export const template_content_top = (content = null) => {
 
         <nav class="main-menu-wrapper">
           <ul class="main-menu">
-            <li class="menu-item"><a onclick="${closeMenu}" class="${"menu-link " + (isActive ? "active" : "")}" href="/about">${t`About this website`}</a></li>
+            ${[...pageIds.values()].map((pageId) => {
+    const contentPage = getPropertyFromId(app.pages, pageId, Language.current);
+    const isActive = location.pathname === "/" + lastPart(contentPage.id);
+    return contentPage ? html`<li class="menu-item"><a onclick="${closeMenu}" class="${"menu-link " + (isActive ? "active" : "")}" href="${"/" + lastPart(contentPage.id)}">${contentPage.name}</a></li>` : html``;
+  })}
           </ul>
         </nav>       
 
@@ -323,7 +354,7 @@ export const template_site_language = () => {
 
     <select ref="${(element) => {
     visibleSelect = element;
-    setTimeout(updateWidth, 20);
+    setTimeout(updateWidth);
   }}" class="site-language-picker" onchange="${(event) => setSiteLanguage(event.currentTarget.value)}">
       ${[...Object.entries(Language.uiLanguages)].sort(([a], [b]) => a.localeCompare(b)).map(([langCode, label]) => html`
         <option selected="${Language.current === langCode ? true : null}" value="${langCode}">${label}</option>
@@ -331,7 +362,7 @@ export const template_site_language = () => {
     </select>
   </div>`;
 };
-export const template_about = () => {
+export const template_page = (page) => {
   return html`
       <div class="content-wrapper">
 
@@ -339,7 +370,10 @@ export const template_about = () => {
 
         <h1 class="site-title desktop" ref="${(element) => element.innerHTML = app.siteInfo.name}"></h1>
         <div class="overview content">
-          <div class="text-page" ref="${(element) => element.innerHTML = app.siteInfo.about}"></div>
+          <div class="text-page">
+            <h2>${page.name}</h2>
+            <div class="inner" ref="${(element) => element.innerHTML = page.content}"></div>
+          </div>
         </div>
         
       </div>

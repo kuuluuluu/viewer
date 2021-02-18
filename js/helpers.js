@@ -7,8 +7,12 @@ export const lastPart = (uri) => {
   return split.pop();
 };
 export const fetchData = async (baseUrl) => {
-  const dataPromise = fetch(baseUrl + "/data?format=json").then((response) => response.json());
-  const infoPromise = fetch(baseUrl + "/info?format=json").then((response) => response.json());
+  const dataPromise = fetch(baseUrl + "/data?format=json").then((response) => response.json()).catch((exception) => {
+    console.log(exception);
+  });
+  const infoPromise = fetch(baseUrl + "/info?format=json").then((response) => response.json()).catch((exception) => {
+    console.log(exception);
+  });
   return Promise.all([infoPromise, dataPromise]);
 };
 export const linkClick = (event) => {

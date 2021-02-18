@@ -6,6 +6,13 @@
     <link rel="stylesheet" href="/css/style.css" />
     <script src="https://polyfill.io/v3/polyfill.min.js?features=fetch"></script>
     <script type="module" src="/js/App.js"></script>
+    <script>
+        if('serviceWorker' in navigator) {
+          navigator.serviceWorker
+                   .register('/sw.js')
+                   .then(function() { console.log("Service Worker Registered"); });
+        }
+        </script>        
 </head>
 <body>
 <div id="app"></div>

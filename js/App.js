@@ -1,9 +1,11 @@
 import {render, html} from "./vendor/uhtml.js";
-import {getEntityType, fetchData, lastPart, setCaretAtEnd} from "./helpers.js";
+import {fetchData, lastPart, setCaretAtEnd} from "./helpers.js";
 import {addMatomo, addChatwoot} from "./ThirdPartyScripts.js";
-import {template_style, template_header, template_sidebar, template_overview, template_about} from "./BaseTemplates.js";
 import {Language, isRTL} from "./LanguageService.js";
 import {env} from "./Env.js";
+import {UniversalRouter} from "./vendor/universal-router.js";
+import {routes} from "./routes.js";
+import {template_style, template_header, template_sidebar} from "./BaseTemplates.js";
 const baseUrl = `${env.channelsApi}/${env.channelId}`;
 Language.setBaseUrl(baseUrl);
 class App {
@@ -31,17 +33,18 @@ class App {
           addMatomo(this.siteInfo.matomo);
         if (siteInfo.chatwoot)
           addChatwoot(this.siteInfo.chatwoot);
-        this.items = items?.ebook ?? items?.video;
-        this.authors = items?.person ?? [];
-        this.categories = items?.category ?? [];
+        this.setItems(items ? items : JSON.parse(localStorage.offlineItems ?? "[]"));
         this.filters = this.createFilters(this.items, this.authors, this.categories);
+        this.routerContext = {
+          app: this
+        };
+        this.router = new UniversalRouter(routes(), {context: this.routerContext});
       } else {
         this.couldNotLoad = true;
       }
       this.render();
     }).catch((exception) => {
       console.log(exception);
-      this.couldNotLoad = true;
       this.render();
     });
     window.addEventListener("click", (event) => {
@@ -50,6 +53,7 @@ class App {
         this.render();
       }
     });
+    Language.addEventListener("language-change", () => window.$chatwoot?.setLocale(Language.current));
     window.addEventListener("resize", () => this.render());
     window.addEventListener("popstate", () => this.render());
     window.addEventListener("should-render", () => this.render());
@@ -66,6 +70,12 @@ class App {
     const siteInfoFinalFallback = this.allSiteInfo.find((info) => !info.langCode);
     this.siteInfo = siteInfoCurrentLanguage ?? siteInfoFallback ?? siteInfoFinalFallback;
     document.title = this.siteInfo.name.replace(/(<([^>]+)>)/gi, "");
+  }
+  setItems(items) {
+    this.items = items?.ebook ?? items?.video;
+    this.authors = items?.person ?? [];
+    this.pages = items?.page ?? [];
+    this.categories = items?.category ?? [];
   }
   createFilters(items, authors, categories) {
     const query = new URLSearchParams(location.search);
@@ -131,7 +141,7 @@ class App {
     });
     return filteredItems;
   }
-  render() {
+  async render() {
     if (this.couldNotLoad) {
       render(this.element, html`
         <div>
@@ -141,13 +151,7 @@ class App {
       return;
     }
     this.setSiteInfo();
-    let page = "page";
-    if (location.pathname === "/")
-      page = "overview";
-    if (location.pathname.split("/")?.[1] === "about")
-      page = "about";
     this.filteredItems = this.getFilteredItems();
-    document.body.dataset.page = page;
     if (this.showPanel) {
       document.body.dataset.showPanel = this.showPanel;
     } else {
@@ -155,46 +159,22 @@ class App {
     }
     const siteIsRtl = isRTL(Language.uiLanguages[Language.current]);
     document.body.dir = siteIsRtl ? "rtl" : "ltr";
-    if (window.$chatwoot) {
-      window.$chatwoot.setLocale(Language.current);
-    } else {
-      window.chatwootSettings = {
-        locale: Language.current
-      };
+    try {
+      const response = await this.router.resolve({pathname: location.pathname});
+      render(this.element, html`${[
+        template_style(),
+        template_header(),
+        template_sidebar(),
+        ...response
+      ]}`);
+    } catch (exception) {
     }
-    const type = location.pathname.split("/")?.[1];
-    if (this.currentPage !== page && page === "page")
-      getEntityType(type).pageInit();
-    this.currentPage = page;
-    render(this.element, html`
-        ${page === "page" ? [
-      template_style(),
-      template_header(),
-      template_sidebar(),
-      getEntityType(type).page()
-    ] : ""}
-
-        ${page === "overview" ? [
-      template_style(),
-      template_header(),
-      template_sidebar(),
-      template_overview()
-    ] : ""}
-
-        ${page === "about" ? [
-      template_style(),
-      template_header(),
-      template_sidebar(),
-      template_about()
-    ] : ""}
-
-    `);
   }
   updateUrl() {
     const filters2 = this.createFilterUrl(this.filters);
     history.pushState(null, null, filters2 ? "?" + filters2 : "/");
   }
-  createFilterUrl(filters2) {
+  createFilterUrl(filters2, skipSearch = false) {
     const urlObject = {};
     for (const [name, filter] of Object.entries(filters2)) {
       const selection = [...filter.entries()].filter(([, selected]) => selected).map(([tag]) => lastPart(tag).replace(/,/g, "&#x2C;")).join(",");
@@ -202,7 +182,7 @@ class App {
         urlObject[name] = selection;
       }
     }
-    if (this.search) {
+    if (this.search && !skipSearch) {
       urlObject.search = this.search;
     }
     urlObject["site-language"] = Language.current;
